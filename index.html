@@ -83,8 +83,8 @@ padding:4px 10px; border-radius:4px;
 
 /* SECTION LABEL */
 .section-label {
-font-family:‘Space Mono’,monospace; font-size:10px; text-transform:uppercase;
-letter-spacing:2px; color:rgba(0,212,170,0.5); margin-bottom:12px;
+font-family:‘Space Mono’,monospace; font-size:12px; text-transform:uppercase;
+letter-spacing:2px; color:rgba(0,212,170,0.8); margin-bottom:16px; margin-top:12px;
 display:flex; align-items:center; gap:10px;
 }
 .section-label::after { content:’’; flex:1; height:1px; background:var(–border); }
@@ -113,9 +113,9 @@ box-shadow: inset 0 0 0 1px #30363d;
 .kpi-sub { font-size:11px; color:#7d8590 !important; }
 
 /* GRID */
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
-.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px; }
-.grid-3-1 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:16px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:24px; }
+.grid-3-1 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px; }
 
 /* CARD */
 .card {
@@ -124,7 +124,7 @@ border-radius:12px; padding:20px;
 box-shadow: inset 0 0 0 1px #30363d;
 }
 .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-.card-title { font-family:‘Space Mono’,monospace; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(–muted); }
+.card-title { font-family:‘Space Mono’,monospace; font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(–muted); }
 .card-badge { font-size:10px; font-family:‘Space Mono’,monospace; padding:2px 8px; border-radius:3px; background:var(–surface2); color:var(–muted); border:1px solid var(–border); }
 
 /* CHARTS */
@@ -589,21 +589,42 @@ async function init() {
     if(t.win) riskGroups[r].wins++;
   });
   const riskContainer = document.getElementById('risk-bars');
-  riskContainer.innerHTML = Object.entries(riskGroups).sort((a,b)=>parseFloat(a[0])-parseFloat(b[0])).map(([risk,v])=>{
+  const riskEntries = Object.entries(riskGroups).sort((a,b)=>parseFloat(a[0])-parseFloat(b[0]));
+  riskContainer.innerHTML = riskEntries.map(([risk,v])=>{
     const wr = Math.round(v.wins/v.total*100);
-    const col = wr>=60?'var(--green)':wr>=40?'var(--yellow)':'var(--red)';
+    const col = wr>=60?'#3fb950':wr>=40?'#d29922':'#f85149';
+    const barW = Math.round(v.total/completed.length*100);
     return `<div class="stat-bar-item">
-      <div class="stat-bar-label"><span>${risk}</span><span style="color:${col}">${wr}% WR (${v.total} trades)</span></div>
-      <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${v.total/completed.length*100}%;background:${col}"></div></div>
+      <div class="stat-bar-label"><span style="color:#e6edf3">${risk}</span><span style="color:${col};font-family:Space Mono,monospace;font-size:11px">${v.total} trade${v.total>1?'s':''}</span></div>
+      <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${barW}%;background:${col}"></div></div>
     </div>`;
-  }).join('');
+  }).join('') + `
+  <div style="border-top:1px solid #21262d;margin-top:14px;padding-top:14px">
+    <div style="font-family:Space Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7d8590;margin-bottom:10px">Winrate par niveau de risk</div>
+    ${riskEntries.map(([risk,v])=>{
+      const wr = Math.round(v.wins/v.total*100);
+      const col = wr>=60?'#3fb950':wr>=40?'#d29922':'#f85149';
+      const icon = wr>=60?'✓':wr>=40?'~':'✗';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:12px">
+        <span style="color:#e6edf3">${risk}</span>
+        <span style="color:${col};font-family:Space Mono,monospace;font-weight:700">${wr}% WR ${icon}</span>
+      </div>`;
+    }).join('')}
+  </div>`;
 
   // ─── ERRORS BAR ────────────────────────────────────────────
   const mistakes = {};
   completed.forEach(t=>{
     if(t.mistake) {
-      const parts = t.mistake.split(/[,;]+/).map(s=>s.trim()).filter(Boolean);
-      parts.forEach(m=>{ mistakes[m]=(mistakes[m]||0)+1; });
+      // Split on common separators and also handle long sentences as single entries
+      const parts = t.mistake.split(/[,;\/\n]+/).map(s=>s.trim()).filter(s=>s.length>1&&s.length<60);
+      if(parts.length > 0) {
+        parts.forEach(m=>{ mistakes[m]=(mistakes[m]||0)+1; });
+      } else {
+        // Fallback: use whole string truncated
+        const m = t.mistake.substring(0,30).trim();
+        if(m) mistakes[m]=(mistakes[m]||0)+1;
+      }
     }
   });
   const errLabels = Object.keys(mistakes);
@@ -612,15 +633,14 @@ async function init() {
     new Chart(document.getElementById('errorsBar'), {
       type:'bar',
       data:{
-        labels:errLabels.map(l=>l.length>20?l.substring(0,20)+'…':l),
-        datasets:[{ data:errVals, backgroundColor:errVals.map((_,i)=>COLORS[i%COLORS.length]), borderRadius:3, borderSkipped:false }]
+        labels:errLabels.map(l=>l.length>22?l.substring(0,22)+'…':l),
+        datasets:[{ data:errVals, backgroundColor:errVals.map((_,i)=>COLORS[i%COLORS.length]), borderRadius:4, borderSkipped:false }]
       },
       options:{
         ...baseOpts,
-        indexAxis:'y',
         scales:{
-          x:{ grid:{color:gridColor}, ticks:{color:'#7d8590',font,stepSize:1} },
-          y:{ grid:{color:gridColor}, ticks:{color:'#7d8590',font} }
+          x:{ grid:{color:gridColor}, ticks:{color:'#7d8590',font,maxRotation:35} },
+          y:{ grid:{color:gridColor}, ticks:{color:'#7d8590',font,stepSize:1} }
         }
       }
     });
@@ -630,11 +650,21 @@ async function init() {
 
   // ─── MGMT DONUT ────────────────────────────────────────────
   const mgmtCounts = count(completed,'mgmt');
-  const mgmtLabels = Object.keys(mgmtCounts).filter(k=>k!=='N/A');
+  const mgmtLabels = Object.keys(mgmtCounts).filter(k=>k!=='N/A'&&k!=='');
   const mgmtVals = mgmtLabels.map(k=>mgmtCounts[k]);
   const mgmtCols = mgmtLabels.map(l=>l.includes('👍')?'#3fb950':'#f85149');
+  const mgmtTotal = mgmtVals.reduce((a,b)=>a+b,0)||1;
   new Chart(document.getElementById('mgmtDonut'), donutConfig(mgmtLabels, mgmtVals, mgmtCols));
-  makeLegend(document.getElementById('mgmt-legend'), mgmtLabels, mgmtVals, mgmtCols, mgmtVals.reduce((a,b)=>a+b,0)||1);
+  // Custom legend with proper labels
+  const mgmtLegendEl = document.getElementById('mgmt-legend');
+  mgmtLegendEl.innerHTML = mgmtLabels.map((l,i)=>{
+    const pct = Math.round(mgmtVals[i]/mgmtTotal*100);
+    const label = l.includes('👍') ? '👍 Bonne gestion' : '👎 Mauvaise gestion';
+    return `<div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:${mgmtCols[i]}"></div>${label}</div>
+      <div class="legend-val" style="color:${mgmtCols[i]}">${mgmtVals[i]} trades (${pct}%)</div>
+    </div>`;
+  }).join('');
 
   // ─── SCORE ─────────────────────────────────────────────────
   const goodMgmt = completed.filter(t=>t.mgmt.includes('👍')).length;
@@ -658,24 +688,34 @@ async function init() {
     </div>`).join('');
 
   // ─── TABLE ─────────────────────────────────────────────────
+  const ASSET_COLORS = ['bg-teal','bg-blue','bg-purple','bg-yellow','bg-green'];
+  const assetColorMap = {};
+  let assetColorIdx = 0;
   const tbody = document.getElementById('trade-table');
-  tbody.innerHTML = [...trades].reverse().map((t,i)=>`
-    <tr>
-      <td class="text-muted text-mono">${String(trades.length-i).padStart(2,'0')}</td>
-      <td class="text-mono" style="font-size:11px">${t.date?t.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—'}</td>
-      <td><span class="badge bg-teal">${t.asset.length>18?t.asset.substring(0,18)+'…':t.asset}</span></td>
+  tbody.innerHTML = [...trades].reverse().map((t,i)=>{
+    if(!assetColorMap[t.asset]) { assetColorMap[t.asset]=ASSET_COLORS[assetColorIdx%ASSET_COLORS.length]; assetColorIdx++; }
+    const assetCol = assetColorMap[t.asset];
+    const tendCol = t.tendance?.includes('Down')||t.tendance?.includes('Counter')?'bg-red':
+                    t.tendance?.includes('Up')||t.tendance?.includes('In')?'bg-green':
+                    t.tendance?.includes('Range')?'bg-yellow':'bg-muted';
+    const dayCol = t.day==='Vendredi'||t.day==='Jeudi'?'bg-blue':t.day==='Lundi'?'bg-purple':'bg-muted';
+    return `<tr>
+      <td class="text-muted text-mono" style="font-size:11px">${String(trades.length-i).padStart(2,'0')}</td>
+      <td class="text-mono" style="font-size:11px;color:#6e9fff">${t.date?t.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—'}</td>
+      <td><span class="badge ${assetCol}">${t.asset.length>18?t.asset.substring(0,18)+'…':t.asset}</span></td>
       <td><span class="badge ${orderColor(t.orderType)}">${t.orderType||'—'}</span></td>
-      <td class="text-muted text-mono">${t.tf||'—'}</td>
-      <td class="text-mono">${t.risk?(t.risk*100).toFixed(2)+'%':'—'}</td>
-      <td class="text-mono">${t.rrInit||'—'}R</td>
-      <td class="text-mono ${t.rrFinal>0?'text-green':t.rrFinal<0?'text-red':''}">${t.rrFinal!==0?t.rrFinal+'R':'—'}</td>
+      <td><span class="badge bg-muted">${t.tf||'—'}</span></td>
+      <td class="text-mono" style="color:#bc8cff">${t.risk?(t.risk*100).toFixed(2)+'%':'—'}</td>
+      <td class="text-mono" style="color:#7d8590">${t.rrInit?t.rrInit+'R':'—'}</td>
+      <td class="text-mono" style="color:${t.rrFinal>0?'#3fb950':t.rrFinal<0?'#f85149':'#7d8590'};font-weight:700">${t.rrFinal!==0?t.rrFinal+'R':'—'}</td>
       <td><span class="badge ${resultColor(t.resultat)}">${t.resultat||'—'}</span></td>
-      <td class="text-mono ${t.pl>0?'text-green':t.pl<0?'text-red':''}">${t.pl!==0?(t.pl>0?'+':'')+t.pl.toLocaleString('fr-FR')+'$':'—'}</td>
-      <td><span class="badge bg-muted">${t.tendance||'—'}</span></td>
-      <td>${t.mgmt||'—'}</td>
-      <td>${t.win?'✅':'❌'}</td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--muted)">${t.mistake||'—'}</td>
-    </tr>`).join('');
+      <td class="text-mono" style="color:${t.pl>0?'#3fb950':t.pl<0?'#f85149':'#7d8590'};font-weight:700">${t.pl!==0?(t.pl>0?'+':'')+t.pl.toLocaleString('fr-FR')+'$':'—'}</td>
+      <td><span class="badge ${tendCol}">${t.tendance||'—'}</span></td>
+      <td style="font-size:16px">${t.mgmt||'—'}</td>
+      <td style="font-size:14px">${t.win?'✅':'❌'}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:#d29922;font-size:11px">${t.mistake||'—'}</td>
+    </tr>`;
+  }).join('');
 
   // ─── SHOW APP ──────────────────────────────────────────────
   document.getElementById('loading').style.display = 'none';
