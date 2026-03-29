@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #161b22;
+    --border: #21262d;
+    --border2: #30363d;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --accent: #00d4aa;
+    --accent2: #ff6b6b;
+    --accent3: #ffd166;
+    --accent4: #6e9fff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --purple: #bc8cff;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+font-size: 14px;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* BACKGROUND GRID */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: 0;
+}
+
+.container {
+max-width: 1440px;
+margin: 0 auto;
+padding: 24px;
+position: relative;
+z-index: 1;
+}
+
+/* HEADER */
+.header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 32px;
+padding-bottom: 20px;
+border-bottom: 1px solid var(–border);
+}
+
+.header-left {
+display: flex;
+align-items: center;
+gap: 16px;
+}
+
+.logo-mark {
+width: 40px;
+height: 40px;
+background: linear-gradient(135deg, var(–accent), var(–accent4));
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-family: ‘Space Mono’, monospace;
+font-weight: 700;
+font-size: 16px;
+color: #000;
+}
+
+.header-title h1 {
+font-family: ‘Space Mono’, monospace;
+font-size: 18px;
+font-weight: 700;
+letter-spacing: -0.5px;
+}
+
+.header-title p {
+color: var(–muted);
+font-size: 12px;
+font-family: ‘Space Mono’, monospace;
+margin-top: 2px;
+}
+
+.header-right {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.tag {
+background: rgba(0,212,170,0.1);
+border: 1px solid rgba(0,212,170,0.25);
+color: var(–accent);
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+padding: 4px 10px;
+border-radius: 4px;
+}
+
+.live-dot {
+width: 8px;
+height: 8px;
+background: var(–green);
+border-radius: 50%;
+animation: pulse 2s ease infinite;
+display: inline-block;
+margin-right: 6px;
+}
+
+@keyframes pulse {
+0%, 100% { opacity: 1; transform: scale(1); }
+50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* KPI ROW */
+.kpi-row {
+display: grid;
+grid-template-columns: repeat(6, 1fr);
+gap: 12px;
+margin-bottom: 20px;
+}
+
+.kpi {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 16px;
+position: relative;
+overflow: hidden;
+transition: border-color 0.2s;
+}
+
+.kpi:hover { border-color: var(–border2); }
+
+.kpi::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 2px;
+}
+
+.kpi.green::before { background: var(–green); }
+.kpi.red::before { background: var(–red); }
+.kpi.yellow::before { background: var(–yellow); }
+.kpi.blue::before { background: var(–accent4); }
+.kpi.teal::before { background: var(–accent); }
+.kpi.purple::before { background: var(–purple); }
+
+.kpi-label {
+font-size: 10px;
+text-transform: uppercase;
+letter-spacing: 1px;
+color: var(–muted);
+font-family: ‘Space Mono’, monospace;
+margin-bottom: 10px;
+}
+
+.kpi-value {
+font-family: ‘Space Mono’, monospace;
+font-size: 26px;
+font-weight: 700;
+line-height: 1;
+margin-bottom: 6px;
+}
+
+.kpi-value.green { color: var(–green); }
+.kpi-value.red { color: var(–red); }
+.kpi-value.yellow { color: var(–yellow); }
+.kpi-value.blue { color: var(–accent4); }
+.kpi-value.teal { color: var(–accent); }
+.kpi-value.purple { color: var(–purple); }
+
+.kpi-sub {
+font-size: 11px;
+color: var(–muted);
+}
+
+/* GRID LAYOUT */
+.grid-2 {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 16px;
+margin-bottom: 16px;
+}
+
+.grid-3 {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 16px;
+margin-bottom: 16px;
+}
+
+.grid-3-1 {
+display: grid;
+grid-template-columns: 2fr 1fr;
+gap: 16px;
+margin-bottom: 16px;
+}
+
+.grid-1-2 {
+display: grid;
+grid-template-columns: 1fr 2fr;
+gap: 16px;
+margin-bottom: 16px;
+}
+
+/* CARD */
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px;
+position: relative;
+}
+
+.card-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 20px;
+}
+
+.card-title {
+font-family: ‘Space Mono’, monospace;
+font-size: 12px;
+text-transform: uppercase;
+letter-spacing: 1px;
+color: var(–muted);
+}
+
+.card-badge {
+font-size: 10px;
+font-family: ‘Space Mono’, monospace;
+padding: 2px 8px;
+border-radius: 3px;
+background: var(–surface2);
+color: var(–muted);
+border: 1px solid var(–border);
+}
+
+/* CHART CONTAINER */
+.chart-wrap {
+position: relative;
+width: 100%;
+}
+
+.chart-wrap canvas {
+max-width: 100%;
+}
+
+/* EQUITY CURVE special */
+.equity-height { height: 200px; }
+.donut-height { height: 220px; }
+.bar-height { height: 200px; }
+
+/* TABLE */
+.table-wrap {
+overflow-x: auto;
+}
+
+table {
+width: 100%;
+border-collapse: collapse;
+}
+
+th {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+text-transform: uppercase;
+letter-spacing: 0.8px;
+color: var(–muted);
+padding: 8px 12px;
+text-align: left;
+border-bottom: 1px solid var(–border);
+white-space: nowrap;
+}
+
+td {
+padding: 10px 12px;
+border-bottom: 1px solid rgba(33,38,45,0.6);
+font-size: 13px;
+white-space: nowrap;
+}
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+.badge {
+display: inline-block;
+padding: 2px 8px;
+border-radius: 3px;
+font-size: 11px;
+font-family: ‘Space Mono’, monospace;
+}
+
+.badge-green { background: rgba(63,185,80,0.15); color: var(–green); }
+.badge-red { background: rgba(248,81,73,0.15); color: var(–red); }
+.badge-yellow { background: rgba(210,153,34,0.15); color: var(–yellow); }
+.badge-blue { background: rgba(110,159,255,0.15); color: var(–accent4); }
+.badge-teal { background: rgba(0,212,170,0.12); color: var(–accent); }
+.badge-muted { background: rgba(125,133,144,0.12); color: var(–muted); }
+
+.text-green { color: var(–green); }
+.text-red { color: var(–red); }
+.text-yellow { color: var(–yellow); }
+.text-muted { color: var(–muted); }
+.text-mono { font-family: ‘Space Mono’, monospace; }
+
+/* STAT BARS */
+.stat-bar-row {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.stat-bar-item {}
+
+.stat-bar-label {
+display: flex;
+justify-content: space-between;
+margin-bottom: 5px;
+font-size: 12px;
+}
+
+.stat-bar-track {
+height: 6px;
+background: var(–surface2);
+border-radius: 3px;
+overflow: hidden;
+}
+
+.stat-bar-fill {
+height: 100%;
+border-radius: 3px;
+transition: width 1s ease;
+}
+
+/* DONUT LEGEND */
+.donut-legend {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin-top: 16px;
+}
+
+.legend-item {
+display: flex;
+align-items: center;
+justify-content: space-between;
+font-size: 12px;
+}
+
+.legend-dot {
+width: 8px;
+height: 8px;
+border-radius: 50%;
+margin-right: 8px;
+flex-shrink: 0;
+}
+
+.legend-left {
+display: flex;
+align-items: center;
+color: var(–muted);
+}
+
+.legend-val {
+font-family: ‘Space Mono’, monospace;
+font-size: 12px;
+}
+
+/* SECTION LABEL */
+.section-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+text-transform: uppercase;
+letter-spacing: 2px;
+color: rgba(0,212,170,0.5);
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.section-label::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: var(–border);
+}
+
+/* SCORE CIRCLE */
+.score-circle {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
+
+.score-ring {
+position: relative;
+width: 120px;
+height: 120px;
+}
+
+.score-ring svg {
+transform: rotate(-90deg);
+}
+
+.score-ring-text {
+position: absolute;
+inset: 0;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+}
+
+.score-num {
+font-family: ‘Space Mono’, monospace;
+font-size: 28px;
+font-weight: 700;
+color: var(–accent);
+}
+
+.score-label {
+font-size: 10px;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+/* HEATMAP */
+.heatmap {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 3px;
+}
+
+.heatmap-cell {
+aspect-ratio: 1;
+border-radius: 2px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 9px;
+font-family: ‘Space Mono’, monospace;
+color: var(–muted);
+}
+
+.heatmap-header {
+font-size: 9px;
+color: var(–muted);
+text-align: center;
+padding: 4px 0;
+font-family: ‘Space Mono’, monospace;
+}
+
+/* ANIMATIONS */
+@keyframes fadeInUp {
+from { opacity: 0; transform: translateY(16px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.kpi { animation: fadeInUp 0.4s ease both; }
+.kpi:nth-child(1) { animation-delay: 0.05s; }
+.kpi:nth-child(2) { animation-delay: 0.10s; }
+.kpi:nth-child(3) { animation-delay: 0.15s; }
+.kpi:nth-child(4) { animation-delay: 0.20s; }
+.kpi:nth-child(5) { animation-delay: 0.25s; }
+.kpi:nth-child(6) { animation-delay: 0.30s; }
+
+.card { animation: fadeInUp 0.5s ease both; animation-delay: 0.2s; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(–bg); }
+::-webkit-scrollbar-thumb { background: var(–border2); border-radius: 3px; }
+
+/* FOOTER */
+.footer {
+text-align: center;
+padding: 24px 0 8px;
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+color: rgba(125,133,144,0.4);
+letter-spacing: 1px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-mark">TR</div>
+      <div class="header-title">
+        <h1>JOURNAL DE TRADING</h1>
+        <p>// Performance Dashboard — Période : Sep–Oct 2023</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="tag"><span class="live-dot"></span>10 TRADES</span>
+      <span class="tag">MULTI-ACTIFS</span>
+    </div>
+  </div>
+
+  <!-- KPI ROW -->
+
+  <div class="section-label">Vue d'ensemble</div>
+  <div class="kpi-row">
+    <div class="kpi teal">
+      <div class="kpi-label">Winrate</div>
+      <div class="kpi-value teal">60%</div>
+      <div class="kpi-sub">6 trades gagnants</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">R/R Moyen</div>
+      <div class="kpi-value green">+1.83R</div>
+      <div class="kpi-sub">Cible : &gt; 1.5R ✓</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Profit Factor</div>
+      <div class="kpi-value blue">2.74</div>
+      <div class="kpi-sub">Gains / Pertes bruts</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="kpi-label">Espérance</div>
+      <div class="kpi-value yellow">+0.84R</div>
+      <div class="kpi-sub">Par trade en moyenne</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Max Drawdown</div>
+      <div class="kpi-value red">−1.5R</div>
+      <div class="kpi-sub">2 SL consécutifs</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Bon Trades</div>
+      <div class="kpi-value purple">50%</div>
+      <div class="kpi-sub">5 / 10 validés ✅</div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Equity Curve + Résultats Donut -->
+
+  <div class="section-label">Performance & Résultats</div>
+  <div class="grid-3-1">
+
+```
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Courbe d'Équité (R cumulé)</span>
+    <span class="card-badge">R cumulé</span>
+  </div>
+  <div class="chart-wrap equity-height">
+    <canvas id="equityChart"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Répartition Résultats</span>
+  </div>
+  <div class="chart-wrap" style="height:160px">
+    <canvas id="resultsDonut"></canvas>
+  </div>
+  <div class="donut-legend">
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#3fb950"></div>TP Total</div>
+      <div class="legend-val text-green">30%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#6e9fff"></div>Profit Partiel</div>
+      <div class="legend-val" style="color:var(--accent4)">20%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#d29922"></div>Breakeven</div>
+      <div class="legend-val text-yellow">20%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#f85149"></div>SL Total</div>
+      <div class="legend-val text-red">30%</div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ROW 2: Actifs + Erreurs + Tendance -->
+
+  <div class="section-label">Analyse par Actif & Setup</div>
+  <div class="grid-3">
+
+```
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Performance par Actif</span>
+    <span class="card-badge">R gagné</span>
+  </div>
+  <div class="chart-wrap bar-height">
+    <canvas id="assetsBar"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Type de Trade</span>
+    <span class="card-badge">Fondamental / Technique</span>
+  </div>
+  <div class="chart-wrap" style="height:150px">
+    <canvas id="tradeTypeDonut"></canvas>
+  </div>
+  <div class="donut-legend">
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#00d4aa"></div>100% Technique</div>
+      <div class="legend-val" style="color:var(--accent)">30%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#6e9fff"></div>75% Tech / 25% Fond</div>
+      <div class="legend-val" style="color:var(--accent4)">30%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#bc8cff"></div>50% / 50%</div>
+      <div class="legend-val" style="color:var(--purple)">20%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#ffd166"></div>75% Fond / 25% Tech</div>
+      <div class="legend-val" style="color:#ffd166">20%</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Tendance</span>
+  </div>
+  <div class="chart-wrap" style="height:150px">
+    <canvas id="tendanceDonut"></canvas>
+  </div>
+  <div class="donut-legend">
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#3fb950"></div>In Trend</div>
+      <div class="legend-val text-green">60%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#d29922"></div>Range Trade</div>
+      <div class="legend-val text-yellow">20%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#f85149"></div>Counter Trend</div>
+      <div class="legend-val text-red">10%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#6e9fff"></div>Reversal</div>
+      <div class="legend-val" style="color:var(--accent4)">10%</div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ROW 3: Winrate par jour + Holding Period + Risk -->
+
+  <div class="section-label">Timing & Risk Management</div>
+  <div class="grid-3">
+
+```
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Winrate par Jour</span>
+  </div>
+  <div class="chart-wrap bar-height">
+    <canvas id="dayBar"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Holding Period</span>
+  </div>
+  <div class="chart-wrap" style="height:150px">
+    <canvas id="holdingDonut"></canvas>
+  </div>
+  <div class="donut-legend">
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#3fb950"></div>&lt; 1H</div>
+      <div class="legend-val text-green">40%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#6e9fff"></div>&lt; 5H</div>
+      <div class="legend-val" style="color:var(--accent4)">40%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#bc8cff"></div>&lt; 10J</div>
+      <div class="legend-val" style="color:var(--purple)">10%</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-left"><div class="legend-dot" style="background:#d29922"></div>&lt; 3J</div>
+      <div class="legend-val text-yellow">10%</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Risk par Trade</span>
+  </div>
+  <div class="stat-bar-row">
+    <div class="stat-bar-item">
+      <div class="stat-bar-label">
+        <span>0.25%</span>
+        <span class="text-muted">2 trades</span>
+      </div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:20%; background: var(--accent)"></div>
+      </div>
+    </div>
+    <div class="stat-bar-item">
+      <div class="stat-bar-label">
+        <span>0.33%</span>
+        <span class="text-muted">1 trade</span>
+      </div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:10%; background: var(--accent)"></div>
+      </div>
+    </div>
+    <div class="stat-bar-item">
+      <div class="stat-bar-label">
+        <span>0.50%</span>
+        <span class="text-muted text-green">4 trades — meilleur</span>
+      </div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:40%; background: var(--green)"></div>
+      </div>
+    </div>
+    <div class="stat-bar-item">
+      <div class="stat-bar-label">
+        <span>0.75%</span>
+        <span class="text-muted">1 trade</span>
+      </div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:10%; background: var(--yellow)"></div>
+      </div>
+    </div>
+    <div class="stat-bar-item">
+      <div class="stat-bar-label">
+        <span>1%</span>
+        <span class="text-muted">2 trades</span>
+      </div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:20%; background: var(--red)"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
+    <div class="card-title" style="margin-bottom:12px">Winrate par Niveau de Risk</div>
+    <div class="donut-legend">
+      <div class="legend-item">
+        <div class="legend-left" style="color:var(--text)">0.25% risk</div>
+        <div class="legend-val text-yellow">50% WR</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-left" style="color:var(--text)">0.50% risk</div>
+        <div class="legend-val text-green">75% WR ✓</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-left" style="color:var(--text)">1% risk</div>
+        <div class="legend-val text-red">50% WR</div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ROW 4: Erreurs + Gestion Émotionnelle + Trade Mgmt -->
+
+  <div class="section-label">Psychologie & Erreurs</div>
+  <div class="grid-3">
+
+```
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Types d'Erreurs</span>
+  </div>
+  <div class="chart-wrap bar-height">
+    <canvas id="errorsBar"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Trade Management Impact</span>
+  </div>
+  <div class="chart-wrap" style="height:150px">
+    <canvas id="mgmtDonut"></canvas>
+  </div>
+  <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border)">
+    <div class="donut-legend">
+      <div class="legend-item">
+        <div class="legend-left" style="font-size:18px">👍</div>
+        <div>
+          <div style="font-size:12px; color:var(--text)">Bonne gestion</div>
+          <div style="font-size:11px; color:var(--muted)">60% des trades</div>
+        </div>
+        <div class="legend-val text-green">+5.5R</div>
+      </div>
+      <div class="legend-item" style="margin-top:6px">
+        <div class="legend-left" style="font-size:18px">👎</div>
+        <div>
+          <div style="font-size:12px; color:var(--text)">Mauvaise gestion</div>
+          <div style="font-size:11px; color:var(--muted)">40% des trades</div>
+        </div>
+        <div class="legend-val text-red">−1.5R</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Score de Discipline</span>
+  </div>
+  <div class="score-circle">
+    <div class="score-ring">
+      <svg viewBox="0 0 120 120" width="120" height="120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12"/>
+        <circle cx="60" cy="60" r="52" fill="none" stroke="url(#scoreGrad)" stroke-width="12"
+          stroke-dasharray="326.7" stroke-dashoffset="130.7" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#00d4aa"/>
+            <stop offset="100%" style="stop-color:#6e9fff"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-ring-text">
+        <div class="score-num">60</div>
+        <div class="score-label">/ 100</div>
+      </div>
+    </div>
+    <div style="margin-top:16px; text-align:center">
+      <div style="font-family:'Space Mono',monospace; font-size:14px; color:var(--yellow); margin-bottom:4px">⚡ À AMÉLIORER</div>
+      <div style="font-size:12px; color:var(--muted)">50% de bons trades seulement</div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:4px">
+    <div class="stat-bar-row">
+      <div class="stat-bar-item">
+        <div class="stat-bar-label">
+          <span style="font-size:11px">Respect du plan</span>
+          <span class="text-green">60%</span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill" style="width:60%; background:var(--green)"></div>
+        </div>
+      </div>
+      <div class="stat-bar-item">
+        <div class="stat-bar-label">
+          <span style="font-size:11px">Gestion du stop</span>
+          <span class="text-yellow">50%</span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill" style="width:50%; background:var(--yellow)"></div>
+        </div>
+      </div>
+      <div class="stat-bar-item">
+        <div class="stat-bar-label">
+          <span style="font-size:11px">Zéro FOMO</span>
+          <span class="text-red">80%</span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill" style="width:80%; background:var(--accent)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ROW 5: Trade Log Table -->
+
+  <div class="section-label">Journal de Trades</div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <span class="card-title">Historique Complet</span>
+      <span class="card-badge">10 trades</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>DATE</th>
+            <th>ACTIF</th>
+            <th>ORDRE</th>
+            <th>TF</th>
+            <th>RISK</th>
+            <th>R/R INIT</th>
+            <th>RÉSULTAT</th>
+            <th>R/R FINAL</th>
+            <th>TENDANCE</th>
+            <th>ERREURS</th>
+            <th>BON TRADE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-muted text-mono">01</td>
+            <td class="text-mono" style="font-size:12px">15/09/23</td>
+            <td><span class="badge badge-teal">EUR/USD</span></td>
+            <td><span class="badge badge-green">BUY LIMIT</span></td>
+            <td class="text-muted text-mono">4H</td>
+            <td class="text-mono">0.50%</td>
+            <td class="text-mono">2.5R</td>
+            <td><span class="badge badge-green">✅ TP Total</span></td>
+            <td class="text-green text-mono">+2.5R</td>
+            <td><span class="badge badge-green">In Trend</span></td>
+            <td class="text-muted">—</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">02</td>
+            <td class="text-mono" style="font-size:12px">18/09/23</td>
+            <td><span class="badge badge-blue">GBP/JPY</span></td>
+            <td><span class="badge badge-red">SELL STOP</span></td>
+            <td class="text-muted text-mono">1H</td>
+            <td class="text-mono">1%</td>
+            <td class="text-mono">2.0R</td>
+            <td><span class="badge badge-red">❌ SL Total</span></td>
+            <td class="text-red text-mono">−1.0R</td>
+            <td><span class="badge badge-red">Counter Trend</span></td>
+            <td><span class="badge badge-muted">FOMO</span></td>
+            <td>❌</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">03</td>
+            <td class="text-mono" style="font-size:12px">20/09/23</td>
+            <td><span class="badge badge-yellow">GOLD</span></td>
+            <td><span class="badge badge-green">BUY LIMIT</span></td>
+            <td class="text-muted text-mono">D</td>
+            <td class="text-mono">0.50%</td>
+            <td class="text-mono">3.0R</td>
+            <td><span class="badge badge-blue">👍 Profit Partiel</span></td>
+            <td class="text-green text-mono">+1.5R</td>
+            <td><span class="badge badge-green">In Trend</span></td>
+            <td class="text-muted">—</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">04</td>
+            <td class="text-mono" style="font-size:12px">22/09/23</td>
+            <td><span class="badge badge-muted">USD/JPY</span></td>
+            <td><span class="badge badge-red">SELL LIMIT</span></td>
+            <td class="text-muted text-mono">4H</td>
+            <td class="text-mono">0.25%</td>
+            <td class="text-mono">2.0R</td>
+            <td><span class="badge badge-yellow">BE</span></td>
+            <td class="text-yellow text-mono">0R</td>
+            <td><span class="badge badge-yellow">Range</span></td>
+            <td><span class="badge badge-muted">Ferm. prémat.</span></td>
+            <td>❌</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">05</td>
+            <td class="text-mono" style="font-size:12px">25/09/23</td>
+            <td><span class="badge badge-teal">NAS100</span></td>
+            <td><span class="badge badge-green">BUY STOP</span></td>
+            <td class="text-muted text-mono">1H</td>
+            <td class="text-mono">1%</td>
+            <td class="text-mono">3.0R</td>
+            <td><span class="badge badge-green">✅ TP Total</span></td>
+            <td class="text-green text-mono">+3.0R</td>
+            <td><span class="badge badge-green">In Trend</span></td>
+            <td class="text-muted">—</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">06</td>
+            <td class="text-mono" style="font-size:12px">27/09/23</td>
+            <td><span class="badge badge-muted">EUR/GBP</span></td>
+            <td><span class="badge badge-red">MARKET SELL</span></td>
+            <td class="text-muted text-mono">2H</td>
+            <td class="text-mono">0.50%</td>
+            <td class="text-mono">2.0R</td>
+            <td><span class="badge badge-red">👎 SL Partiel</span></td>
+            <td class="text-red text-mono">−0.5R</td>
+            <td><span class="badge badge-blue">Reversal</span></td>
+            <td><span class="badge badge-muted">Mauv. Stop Init.</span></td>
+            <td>❌</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">07</td>
+            <td class="text-mono" style="font-size:12px">29/09/23</td>
+            <td><span class="badge badge-yellow">BTC/USD</span></td>
+            <td><span class="badge badge-green">BUY LIMIT</span></td>
+            <td class="text-muted text-mono">D</td>
+            <td class="text-mono">0.75%</td>
+            <td class="text-mono">4.0R</td>
+            <td><span class="badge badge-green">✅ TP Total</span></td>
+            <td class="text-green text-mono">+4.0R</td>
+            <td><span class="badge badge-green">In Trend</span></td>
+            <td class="text-muted">—</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">08</td>
+            <td class="text-mono" style="font-size:12px">02/10/23</td>
+            <td><span class="badge badge-muted">AUD/USD</span></td>
+            <td><span class="badge badge-red">SELL STOP</span></td>
+            <td class="text-muted text-mono">4H</td>
+            <td class="text-mono">0.33%</td>
+            <td class="text-mono">2.0R</td>
+            <td><span class="badge badge-red">❌ SL Total</span></td>
+            <td class="text-red text-mono">−1.0R</td>
+            <td><span class="badge badge-red">Counter Trend</span></td>
+            <td><span class="badge badge-muted">Mauv. Trailed Stop</span></td>
+            <td>❌</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">09</td>
+            <td class="text-mono" style="font-size:12px">04/10/23</td>
+            <td><span class="badge badge-teal">SP500</span></td>
+            <td><span class="badge badge-green">BUY LIMIT</span></td>
+            <td class="text-muted text-mono">1H</td>
+            <td class="text-mono">0.50%</td>
+            <td class="text-mono">3.0R</td>
+            <td><span class="badge badge-blue">👍 Profit Partiel</span></td>
+            <td class="text-green text-mono">+1.8R</td>
+            <td><span class="badge badge-green">In Trend</span></td>
+            <td class="text-muted">—</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td class="text-muted text-mono">10</td>
+            <td class="text-mono" style="font-size:12px">06/10/23</td>
+            <td><span class="badge badge-muted">USD/CAD</span></td>
+            <td><span class="badge badge-green">MARKET BUY</span></td>
+            <td class="text-muted text-mono">30M</td>
+            <td class="text-mono">0.25%</td>
+            <td class="text-mono">1.5R</td>
+            <td><span class="badge badge-yellow">BE</span></td>
+            <td class="text-yellow text-mono">0R</td>
+            <td><span class="badge badge-yellow">Range</span></td>
+            <td><span class="badge badge-muted">Avarice</span></td>
+            <td>❌</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+
+  <div class="footer">TRADING DASHBOARD — MISE À JOUR MANUELLE — DONNÉES EXEMPLE</div>
+
+</div>
+
+<script>
+const C = Chart;
+
+// Default chart options
+const defaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#161b22',
+      borderColor: '#30363d',
+      borderWidth: 1,
+      titleColor: '#7d8590',
+      bodyColor: '#e6edf3',
+      padding: 10,
+      titleFont: { family: "'Space Mono', monospace", size: 10 },
+      bodyFont: { family: "'DM Sans', sans-serif", size: 13 },
+    }
+  }
+};
+
+// 1. EQUITY CURVE
+new C(document.getElementById('equityChart'), {
+  type: 'line',
+  data: {
+    labels: ['Start','T1','T2','T3','T4','T5','T6','T7','T8','T9','T10'],
+    datasets: [{
+      data: [0, 2.5, 1.5, 3.0, 3.0, 6.0, 5.5, 9.5, 8.5, 10.3, 10.3],
+      borderColor: '#00d4aa',
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0,0,0,200);
+        g.addColorStop(0,'rgba(0,212,170,0.25)');
+        g.addColorStop(1,'rgba(0,212,170,0)');
+        return g;
+      },
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#00d4aa',
+      pointBorderColor: '#0a0c0f',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+    }]
+  },
+  options: {
+    ...defaults,
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7d8590', font: { family: "'Space Mono', monospace", size: 9 } }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7d8590', font: { family: "'Space Mono', monospace", size: 9 }, callback: v => v+'R' }
+      }
+    }
+  }
+});
+
+// Donut config helper
+const donutConfig = (labels, data, colors) => ({
+  type: 'doughnut',
+  data: {
+    labels,
+    datasets: [{ data, backgroundColor: colors, borderColor: '#111418', borderWidth: 3, hoverOffset: 4 }]
+  },
+  options: {
+    ...defaults,
+    cutout: '68%',
+    plugins: { ...defaults.plugins, legend: { display: false } }
+  }
+});
+
+// 2. RESULTS DONUT
+new C(document.getElementById('resultsDonut'),
+  donutConfig(
+    ['TP Total','Profit Partiel','Breakeven','SL Total'],
+    [30,20,20,30],
+    ['#3fb950','#6e9fff','#d29922','#f85149']
+  )
+);
+
+// 3. ASSETS BAR
+new C(document.getElementById('assetsBar'), {
+  type: 'bar',
+  data: {
+    labels: ['EUR/USD','GOLD','NAS100','BTC/USD','SP500','GBP/JPY','EUR/GBP','USD/JPY','AUD/USD','USD/CAD'],
+    datasets: [{
+      data: [2.5, 1.5, 3.0, 4.0, 1.8, -1.0, -0.5, 0, -1.0, 0],
+      backgroundColor: (ctx) => ctx.raw >= 0 ? 'rgba(63,185,80,0.7)' : 'rgba(248,81,73,0.7)',
+      borderRadius: 3,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    ...defaults,
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7d8590', font: { family: "'Space Mono', monospace", size: 8 }, maxRotation: 45 }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7d8590', font: { family: "'Space Mono', monospace", size: 9 }, callback: v => v+'R' }
+      }
+    }
+  }
+});
+
+// 4. TRADE TYPE DONUT
+new C(document.getElementById('tradeTypeDonut'),
+  donutConfig(
+    ['100% Tech','75T/25F','50/50','75F/25T'],
+    [30,30,20,20],
+    ['#00d4aa','#6e9fff','#bc8cff','#ffd166']
+  )
+);
+
+// 5. TENDANCE DONUT
+new C(document.getElementById('tendanceDonut'),
+  donutConfig(
+    ['In Trend','Range','Counter Trend','Reversal'],
+    [60,20,10,10],
+    ['#3fb950','#d29922','#f85149','#6e9fff']
+  )
+);
+
+// 6. DAY BAR
+new C(document.getElementById('dayBar'), {
+  type: 'bar',
+  data: {
+    labels: ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Sam','Dim'],
+    datasets: [
+      {
+        label: 'Winrate %',
+        data: [50, 0, 67, 0, 100, 0, 0],
+        backgroundColor: ['rgba(0,212,170,0.6)','rgba(125,133,144,0.2)','rgba(0,212,170,0.6)','rgba(125,133,144,0.2)','rgba(63,185,80,0.8)','rgba(125,133,144,0.2)','rgba(125,133,144,0.2)'],
+        borderRadius: 3,
+      }
+    ]
+  },
+  options: {
+    ...defaults,
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7d8590', font: { family: "'Space Mono', monospace", size: 9 } }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7d8590', font: { family: "'Space Mono', monospace", size: 9 }, callback: v => v+'%', max: 100 }
+      }
+    }
+  }
+});
+
+// 7. HOLDING PERIOD DONUT
+new C(document.getElementById('holdingDonut'),
+  donutConfig(
+    ['< 1H','< 5H','< 10J','< 3J'],
+    [40,40,10,10],
+    ['#3fb950','#6e9fff','#bc8cff','#d29922']
+  )
+);
+
+// 8. ERRORS BAR
+new C(document.getElementById('errorsBar'), {
+  type: 'bar',
+  data: {
+    labels: ['FOMO','Mauv. Stop','Ferm. prémat.','Avarice','Mauv. Trail'],
+    datasets: [{
+      data: [1,1,1,1,1],
+      backgroundColor: ['rgba(248,81,73,0.7)','rgba(210,153,34,0.7)','rgba(188,140,255,0.7)','rgba(255,107,107,0.7)','rgba(110,159,255,0.7)'],
+      borderRadius: 3,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    ...defaults,
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7d8590', font: { family: "'DM Sans', sans-serif", size: 10 }, maxRotation: 30 }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7d8590', font: { family: "'Space Mono', monospace", size: 9 }, stepSize: 1 }
+      }
+    }
+  }
+});
+
+// 9. MGMT DONUT
+new C(document.getElementById('mgmtDonut'),
+  donutConfig(
+    ['Bonne gestion 👍','Mauvaise gestion 👎'],
+    [60,40],
+    ['#3fb950','#f85149']
+  )
+);
+</script>
+
+</body>
+</html>
