@@ -241,7 +241,7 @@ tr:hover td { background:rgba(255,255,255,0.02); }
   <div class="section-label fade">Analyse par Actif & Setup</div>
   <div class="grid-3 fade">
     <div class="card">
-      <div class="card-header"><span class="card-title">P&L par Instrument</span><span class="card-badge">$</span></div>
+      <div class="card-header"><span class="card-title">P&L par Asset</span><span class="card-badge">$</span></div>
       <div class="chart-wrap h200"><canvas id="assetsBar"></canvas></div>
     </div>
     <div class="card">
@@ -360,7 +360,7 @@ const dt  = v => v?.start ? new Date(v.start) : null;
 function getProps(page) {
   const p = page.properties;
   return {
-    instrument:   str(p['Instrument']?.title?.[0]) || 'N/A',
+    asset:   str(p['Asset']?.title?.[0]) || 'N/A',
     date:         dt(p['Date']?.date),
     resultat:     sel(p['Résultat']?.select),
     rrInit:       num(p['R/R initial']?.number),
@@ -468,7 +468,7 @@ async function init() {
 
   // ─── EQUITY CURVE ──────────────────────────────────────────
   let cumPL=0;
-  const eqLabels = ['Départ', ...completed.map(t=>t.instrument.split(' ').slice(-1)[0]+'\n'+t.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}))];
+  const eqLabels = ['Départ', ...completed.map(t=>t.asset.split(' ').slice(-1)[0]+'\n'+t.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}))];
   const eqData = [0, ...completed.map(t=>{ cumPL+=t.pl; return Math.round(cumPL); })];
 
   new Chart(document.getElementById('equityChart'), {
@@ -508,7 +508,7 @@ async function init() {
   makeLegend(document.getElementById('results-legend'), resLabels, resVals, resCols, total);
 
   // ─── ASSETS BAR ────────────────────────────────────────────
-  const plByAsset = sumBy(completed,'pl','instrument');
+  const plByAsset = sumBy(completed,'pl','asset');
   const assetLabels = Object.keys(plByAsset);
   const assetVals = assetLabels.map(k=>plByAsset[k]);
   new Chart(document.getElementById('assetsBar'), {
@@ -652,7 +652,7 @@ async function init() {
     { label:'Sans erreur', val:total?Math.round(noMistake/total*100):0, col:'var(--accent)' },
   ];
   discContainer.innerHTML = discItems.map(d=>`
-    <div class="stat-bar-item
+    <div class="stat-bar-item">
       <div class="stat-bar-label"><span style="font-size:11px">${d.label}</span><span style="color:${d.col}">${d.val}%</span></div>
       <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${d.val}%;background:${d.col}"></div></div>
     </div>`).join('');
@@ -663,7 +663,7 @@ async function init() {
     <tr>
       <td class="text-muted text-mono">${String(trades.length-i).padStart(2,'0')}</td>
       <td class="text-mono" style="font-size:11px">${t.date?t.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—'}</td>
-      <td><span class="badge bg-teal">${t.instrument.length>18?t.instrument.substring(0,18)+'…':t.instrument}</span></td>
+      <td><span class="badge bg-teal">${t.asset.length>18?t.asset.substring(0,18)+'…':t.asset}</span></td>
       <td><span class="badge ${orderColor(t.orderType)}">${t.orderType||'—'}</span></td>
       <td class="text-muted text-mono">${t.tf||'—'}</td>
       <td class="text-mono">${t.risk?(t.risk*100).toFixed(2)+'%':'—'}</td>
