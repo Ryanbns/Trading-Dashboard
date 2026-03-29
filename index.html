@@ -375,7 +375,7 @@ function getProps(page) {
     holding:      str(p['Holding Period']?.rich_text?.[0]),
     tradeType:    str(p['Trade type']?.rich_text?.[0]),
     mgmt:         sel(p['Trade Management']?.select),
-    mistake:      str(p['Mistake']?.rich_text?.[0]),
+    mistake:      (p['Mistake']?.multi_select||[]).map(s=>s.name).join(', '),
     account:      p['Accounts']?.url || '',
   };
 }
@@ -613,28 +613,37 @@ async function init() {
   </div>`;
 
   // ─── ERRORS BAR ────────────────────────────────────────────
+  const KNOWN_ERRORS = [
+    'Mauvais sizing','Avarice','Revenge trading','TP trop ambitieux','FOMO',
+    'Entrée sans confirmation','Clôture anticipée','Mauvais trailing Stop',
+    'Mauvais Stop Initial','Non respect du plan','Overtrading',
+    'Biais directionnel','Raisons personnelles'
+  ];
+  const ERROR_COLORS = {
+    'FOMO':'#f85149','Avarice':'#d29922','Revenge trading':'#f85149',
+    'Overtrading':'#ff9f43','Raisons personnelles':'#bc8cff',
+    'Non respect du plan':'#ee5a24','Biais directionnel':'#6e9fff',
+    'Entrée sans confirmation':'#0abde3','Clôture anticipée':'#bc8cff',
+    'Mauvais trailing Stop':'#d29922','Mauvais Stop Initial':'#f85149',
+    'TP trop ambitieux':'#ff9f43','Mauvais sizing':'#7d8590',
+  };
   const mistakes = {};
   completed.forEach(t=>{
     if(t.mistake) {
-      // Split on common separators and also handle long sentences as single entries
-      const parts = t.mistake.split(/[,;\/\n]+/).map(s=>s.trim()).filter(s=>s.length>1&&s.length<60);
-      if(parts.length > 0) {
-        parts.forEach(m=>{ mistakes[m]=(mistakes[m]||0)+1; });
-      } else {
-        // Fallback: use whole string truncated
-        const m = t.mistake.substring(0,30).trim();
-        if(m) mistakes[m]=(mistakes[m]||0)+1;
-      }
+      t.mistake.split(',').map(s=>s.trim()).filter(Boolean).forEach(m=>{
+        mistakes[m]=(mistakes[m]||0)+1;
+      });
     }
   });
-  const errLabels = Object.keys(mistakes);
+  const errLabels = Object.keys(mistakes).sort((a,b)=>mistakes[b]-mistakes[a]);
   const errVals = errLabels.map(k=>mistakes[k]);
+  const errCols = errLabels.map(k=>ERROR_COLORS[k]||COLORS[errLabels.indexOf(k)%COLORS.length]);
   if(errLabels.length) {
     new Chart(document.getElementById('errorsBar'), {
       type:'bar',
       data:{
         labels:errLabels.map(l=>l.length>22?l.substring(0,22)+'…':l),
-        datasets:[{ data:errVals, backgroundColor:errVals.map((_,i)=>COLORS[i%COLORS.length]), borderRadius:4, borderSkipped:false }]
+        datasets:[{ data:errVals, backgroundColor:errCols, borderRadius:4, borderSkipped:false }]
       },
       options:{
         ...baseOpts,
